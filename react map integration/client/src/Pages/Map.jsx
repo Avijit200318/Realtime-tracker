@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
+import { useEffect, useState } from 'react';
+import { MapContainer, Marker, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+// import L from 'leaflet';
 import 'leaflet-routing-machine';
+import Routing from '../components/Routing';
 
 function ChangeView({ center }) {
   const map = useMap();
@@ -14,9 +15,19 @@ function ChangeView({ center }) {
   return null;
 }
 
+
 export default function Map() {
   const [lat, setLat] = useState(null);
   const [lon, setLon] = useState(null);
+  const [destinationLat, setDestinationLat] = useState(null);
+  const [destinationLon, setDestinationLon] = useState(null);
+  console.log("destinationLat:", destinationLat);
+
+  const allLocation = [
+    { name: "Howrah", lat: 22.595770, lon: 88.263641 },
+    { name: "Sealdah", lat: 22.5678, lon: 88.3710 },
+    { name: "Bidhan Nagar", lat: 22.5915, lon: 88.3908 }
+  ];
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -32,29 +43,11 @@ export default function Map() {
     return <h1>Loading...</h1>;
   }
 
-//   add routing
-  const Routing = ({ lat, lon })=> {
-    const map = useMap();
-  
-    useEffect(() => {
-      if (lat && lon) {
-        L.Routing.control({
-          waypoints: [
-            L.latLng(lat, lon),
-            L.latLng(22.5678, 88.3710)
-          ],
-          routeWhileDragging: true,
-          lineOptions: {
-            styles: [{ color: 'blue', weight: 4 }]
-          },
-        //createMarker: () => null, Removes default markers if markers alredy set then use default markers null.
-        addWaypoints: false, // Prevents adding waypoints on click
-        show: false // Hides the itinerary panel
-        }).addTo(map);
-      }
-    }, [lat, lon, map]);
-  
-    return null;
+  const setDestinationLatLon = (name, lat, lon) => {
+    console.log(name);
+    console.log("destination", lat, lon);
+    setDestinationLat(lat);
+    setDestinationLon(lon);
   }
 
   return (
@@ -67,11 +60,29 @@ export default function Map() {
 
       <Marker position={[lat, lon]}>
         <Popup>
-          <h1 className="">My Location</h1>
+          My Location
         </Popup>
       </Marker>
 
-      <Routing lat={lat} lon={lon} />
+{/* using tooltip to show name of the place. if we want to always to show the name of the place then we can use 'permanent'*/}
+      {/* <Marker position={[22.5915, 88.3908]}>
+        <Tooltip>
+          Bidhan Nagar
+        </Tooltip>
+      </Marker> */}
+
+      {allLocation.length !== 0 && (
+      allLocation.map((data) =>
+        <Marker key={data.name} position={[data.lat, data.lon]} eventHandlers={{ click: () => setDestinationLatLon(data.name, data.lat, data.lon) }}>
+        <Tooltip permanent>
+          {data.name}
+        </Tooltip>
+      </Marker>
+      )  
+      )}
+
+      {(destinationLat && destinationLon) && <Routing lat={lat} lon={lon} desLat={destinationLat} desLon={destinationLon} />
+      }
     </MapContainer>
   );
 }
